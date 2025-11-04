@@ -2,6 +2,7 @@ import yaml
 import os
 import sys
 from loguru import logger
+from .proxy import apply_proxy
 
 # append project path to sys.path
 script_path = os.path.abspath(__file__)
@@ -25,3 +26,10 @@ with open(os.path.join(project_path, "src", "configs", "config_dev.yaml")) as f:
     yaml_configs = yaml.load(f, Loader=yaml.FullLoader)
 
 logger.info("all configs loaded")
+
+if yaml_configs and "proxy" in yaml_configs:
+    proxy_settings = yaml_configs["proxy"]
+    apply_proxy(
+        http_proxy=proxy_settings.get("http"),
+        https_proxy=proxy_settings.get("https")
+    )
