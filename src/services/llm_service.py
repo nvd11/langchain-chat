@@ -13,3 +13,8 @@ class LLMService:
         response = await self.llm.ainvoke(prompt)
         logger.info("LLMService ainvocation complete.")
         return response
+
+    def astream(self, prompt: str):
+        """Streams the response from the LLM."""
+        logger.info(f"LLMService astreaming with prompt: {prompt}")
+        return self.llm.astream(prompt)

@@ -6,24 +6,9 @@
 
 ## 数据库表设计 (Database Schema)
 
-### `conversations` 表
-- **id**: `UUID` - 主键, 对话的唯一标识符。
-- **user_id**: `String` - (可选) 关联用户的标识符。
-- **created_at**: `DateTime` - 对话创建时间，带时区。
+根据项目需求，数据库将包含 `conversations` 和 `messages` 两张核心表。
 
-### `messages` 表
-- **id**: `UUID` - 主键, 消息的唯一标识符。
-- **conversation_id**: `UUID` - 外键, 关联到 `conversations.id`。
-- **role**: `String` - 消息发送者的角色 ('user' 或 'assistant')。
-- **content**: `Text` - 消息的具体内容。
-- **created_at**: `DateTime` - 消息创建时间，带时区。
-
-### `feedback` 表
-- **id**: `UUID` - 主键, 反馈的唯一标识符。
-- **message_id**: `UUID` - 外键, 关联到 `messages.id` (特指助手的某条回复)。
-- **rating**: `Integer` - 评分 (例如 1-5)。
-- **comment**: `Text` - (可选) 用户的文字评论。
-- **created_at**: `DateTime` - 反馈提交时间，带时区。
+详细的表结构、字段定义、数据类型和关系请参考独立的 **[数据库设计文档](docs/database_design.md)**。
 
 ---
 
@@ -62,9 +47,8 @@
     - **2.3. 创建对话**: 实现 `POST /api/v1/conversations` 端点，调用 DAO 层创建一个新的空对话。
     - **2.4. 列出对话**: 实现 `GET /api/v1/conversations` 端点，调用 DAO 层查询并返回所有对话的列表。
     - **2.5. 获取对话历史**: 实现 `GET /api/v1/conversations/{id}` 端点，调用 DAO 层获取指定对话的所有历史消息。
-    - **2.6. 提交反馈**: 实现 `POST /api/v1/feedback` 端点，调用 DAO 层将用户反馈存入 `feedback` 表。
 - **产出**:
-    - 一套完整的 CRUD API，用于前端管理对话和提交反馈。
+    - 一套完整的 CRUD API，用于前端管理对话。
     - API 通过 Swagger UI 进行了自记录。
 
 ---

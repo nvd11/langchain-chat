@@ -5,6 +5,17 @@ gcp:
 proxy:
   http: http://10.0.1.223:7890
   https: http://10.0.1.223:7890
+deepseek:
+  api-key: "DEEPSEEK_API_KEY"
+  base-url: "https://api.deepseek.com"
+  
+database:
+  host: "34.39.2.90"
+  port: 5432
+  dbname: "default_db"
+  user_env_var: "DB_USER"
+  password_env_var: "DB_PASSWORD"
+  base-url: "https://api.deepseek.com"
 
 
 
