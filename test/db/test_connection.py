@@ -6,7 +6,9 @@ from sqlalchemy.sql import text
 from sqlalchemy.exc import SQLAlchemyError
 from loguru import logger
 
-from src.configs.db import async_engine
+from src.configs.db import get_async_engine
+
+async_engine = get_async_engine()
 
 @pytest.mark.asyncio
 async def test_database_connection():

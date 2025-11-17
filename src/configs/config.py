@@ -14,6 +14,10 @@ except FileNotFoundError:
 
 load_dotenv(override=True)
 
+# Get the application environment, default to 'dev' if not set
+app_env = os.getenv("APP_ENVIRONMENT", "dev")
+logger.info(f"Application Environment (APP_ENVIRONMENT) is set to: '{app_env}'")
+
 # append project path to sys.path
 script_path = os.path.abspath(__file__)
 project_path = os.path.dirname(os.path.dirname(os.path.dirname(script_path)))
@@ -31,9 +35,20 @@ logger.info("basic setup done")
 
 
 yaml_configs = None
-# load additon configs.yaml
-with open(os.path.join(project_path, "src", "configs", "config_dev.yaml")) as f:
-    yaml_configs = yaml.load(f, Loader=yaml.FullLoader)
+# Dynamically load config file based on the environment
+config_file_name = f"config_{app_env}.yaml"
+config_file_path = os.path.join(project_path, "src", "configs", config_file_name)
+
+logger.info(f"Attempting to load configuration from: {config_file_path}")
+
+try:
+    with open(config_file_path) as f:
+        yaml_configs = yaml.load(f, Loader=yaml.FullLoader)
+    logger.info(f"Successfully loaded configuration from {config_file_name}")
+except FileNotFoundError:
+    logger.error(f"Configuration file '{config_file_name}' not found. Please ensure it exists.")
+    # Exit or handle the error appropriately
+    sys.exit(1)
 
 logger.info("all configs loaded")
 

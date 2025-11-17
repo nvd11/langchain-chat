@@ -1,4 +1,6 @@
 import os
+import os
+from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from loguru import logger
@@ -7,14 +9,13 @@ from src.configs.config import yaml_configs
 
 def build_db_url(db_config: dict) -> str | None:
     """Builds the database URL from configuration."""
-    user_env_var = db_config.get("user_env_var")
+    user = db_config.get("user")
     password_env_var = db_config.get("password_env_var")
 
-    user = os.getenv(user_env_var)
     password = os.getenv(password_env_var)
 
     if not all([user, password]):
-        logger.error(f"DB credentials not in env vars ('{user_env_var}', '{password_env_var}').")
+        logger.error(f"DB user not in config or password not in env var ('{password_env_var}').")
         return None
 
     host = db_config.get("host")
@@ -43,16 +44,26 @@ if db_config:
 else:
     logger.warning("Database configuration not found, using dummy URL.")
 
-# Create an async engine.
-async_engine = create_async_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    echo=False,  # Set to True to see generated SQL statements
-)
+from functools import lru_cache
+
+@lru_cache()
+def get_async_engine():
+    """
+    Returns a cached async engine instance.
+    The engine is created on the first call and reused on subsequent calls
+    within the same event loop.
+    """
+    logger.info("Creating new async engine instance.")
+    return create_async_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        echo=False,  # Set to True to see generated SQL statements
+    )
 
 # Create a sessionmaker for creating AsyncSession instances
+# The bind is deferred until the engine is created.
 AsyncSessionFactory = sessionmaker(
-    bind=async_engine,
+    bind=get_async_engine(),
     class_=AsyncSession,
     expire_on_commit=False,
 )
@@ -60,7 +71,7 @@ AsyncSessionFactory = sessionmaker(
 # Base class for declarative models
 Base = declarative_base()
 
-async def get_db_session() -> AsyncSession:
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Dependency to get a database session."""
     async with AsyncSessionFactory() as session:
         try:

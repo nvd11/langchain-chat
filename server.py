@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 import os
 
-# Import the chat router
-from src.routers import chat_router
+# Import the routers
+from src.routers import chat_router, user_router, conversation_router
 
 # Get root_path from an environment variable. Defaults to "/chat-api-svc" if not set.
 root_path = os.getenv("ROOT_PATH", "/chat-api-svc")
@@ -26,8 +26,10 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Include the chat router
+# Include the routers
 app.include_router(chat_router.router)
+app.include_router(user_router.router)
+app.include_router(conversation_router.router)
 
 @app.get("/")
 def read_root():

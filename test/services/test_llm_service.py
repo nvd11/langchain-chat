@@ -53,6 +53,7 @@ async def test_llm_service_with_gemini_model_success(mock_post, set_api_key):
     # 3. Call the service
     prompt = "Tell me a joke."
     response = await llm_service.ainvoke(prompt)
+    print(response)
 
     # 4. Assertions
     assert isinstance(response, AIMessage)

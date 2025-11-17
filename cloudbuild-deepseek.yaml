@@ -7,9 +7,15 @@ steps:
       - "-c"
       - |
         echo "DEEPSEEK_API_KEY=$(gcloud secrets versions access latest --secret=deepseek-api-key)" > .env
+        echo "DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-pass-nvd11)" >> .env
         echo "APP_ENVIRONMENT=${_APP_ENV}" >> .env
 
-
+  # Debug step to print the content of the .env file
+  - id: debug-print-env
+    name: 'ubuntu'
+    args: ['cat', '.env']
+    waitFor:
+      - "create .env file"
 
   # Build the container image (it will now include the .env file)
   - id: build docker image
@@ -22,7 +28,7 @@ steps:
       - "Dockerfile"
       - "."
     waitFor:
-      - "create .env file"
+      - "debug-print-env"
 
   # Push the container image to Google Container Registry
   - id: upload docker image to GAR

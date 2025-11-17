@@ -1,11 +1,13 @@
-import asyncio
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.llm.deepseek_chat_model import get_deepseek_llm
 from src.services.llm_service import LLMService
+from src.configs.db import get_db_session
+from src.schemas.chat import ChatRequest
+from src.services import chat_service
 
 # Create an API router
 router = APIRouter(
@@ -23,56 +25,21 @@ def get_llm_service():
         logger.error(f"Failed to initialize LLM service for dependency: {e}")
         return None
 
-# --- Request and Response Models ---
-class ChatRequest(BaseModel):
-    message: str
-
-# --- Stream Generator ---
-async def stream_generator(prompt: str, llm_service: LLMService):
-    """Async generator that yields response chunks from the LLM stream."""
-    if not llm_service:
-        error_message = "LLM Service is not available."
-        logger.error(error_message)
-        yield f"data: {error_message}\n\n"
-        return
-
-    logger.info(f"Initiating true stream for prompt: '{prompt}'")
-    try:
-        # Call the astream method on the service
-        llm_stream = llm_service.astream(prompt)
-        
-        # Iterate over the stream and yield each chunk to the client
-        async for chunk in llm_stream:
-            logger.debug(f"Received chunk of type {type(chunk)}: {chunk}")
-            if hasattr(chunk, 'content') and chunk.content:
-                # The chunk is an AIMessageChunk object, we send its content directly
-                yield f"data: {chunk.content}\n\n"
-        
-        logger.info("Streaming finished.")
-    except Exception as e:
-        error_message = f"An error occurred during streaming: {e}"
-        logger.exception(error_message)  # Use logger.exception to include stack trace
-        yield f"data: {error_message}\n\n"
-
 # --- API Endpoint ---
 @router.post("/chat")
 async def chat(
     request: ChatRequest,
-    llm_service: LLMService = Depends(get_llm_service)
+    llm_service: LLMService = Depends(get_llm_service),
+    db: AsyncSession = Depends(get_db_session),
 ):
     """
-    Receives a user message and returns the model's response as a stream
-    of Server-Sent Events (SSE).
+    Receives a user message, saves it, retrieves conversation history,
+    and returns the model's response as a stream of Server-Sent Events (SSE).
+    The assistant's final response is also saved to the database.
     """
-    logger.info(f"Received chat request with message: '{request.message}'")
+    logger.info(f"Received chat request for conversation {request.conversation_id} with message: '{request.message}'")
     
-    async def stream_wrapper():
-        # A wrapper is needed because the dependency is injected into the endpoint,
-        # not the generator directly.
-        async for chunk in stream_generator(request.message, llm_service):
-            yield chunk
-
     return StreamingResponse(
-        stream_wrapper(),
+        chat_service.stream_chat_response(request, llm_service, db),
         media_type="text/event-stream"
     )
