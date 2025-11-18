@@ -35,14 +35,28 @@ async def get_user_conversations_endpoint(
     )
     return conversations
 
-@router.get("/conversations/{conversation_id}/messages", response_model=List[MessageSchema])
-async def get_conversation_messages_endpoint(
+@router.get("/conversations/{conversation_id}", response_model=ConversationWithMessagesSchema)
+async def get_conversation_with_messages_endpoint(
     conversation_id: int, db: AsyncSession = Depends(get_db_session)
 ):
     """
-    Get all messages for a specific conversation.
+    Get a single conversation with all its messages.
     """
+    # This is not the most efficient way, but it's simple.
+    # A single query with a JOIN would be better.
+    conv_dict = await conversation_dao.get_conversation(db, conversation_id)
+    if not conv_dict:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
     messages = await message_dao.get_messages_by_conversation(
         db=db, conversation_id=conversation_id
     )
-    return messages
+    
+    # Manually construct the final response model
+    response_data = {
+        "id": conv_dict['id'],
+        "user_id": conv_dict['user_id'],
+        "created_at": conv_dict['created_at'],
+        "messages": messages
+    }
+    return ConversationWithMessagesSchema(**response_data)
