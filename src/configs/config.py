@@ -1,6 +1,7 @@
 import yaml
 import os
 import sys
+import json
 from loguru import logger
 from dotenv import load_dotenv
 from .proxy import apply_proxy
@@ -27,25 +28,33 @@ print("project_path is {}".format(project_path))
 # append project path to sys.path
 sys.path.append(project_path)
 
+# Remove default logger and add a new one based on environment
+logger.remove()
 
-def gcp_formatter(record):
-    return {
-        "severity": record["level"].name,
-        "message": record["message"],
-        "timestamp": record["time"].isoformat(),
-        "file": record["file"].path,
-        "line": record["line"],
-        "function": record["function"],
-    }
+if app_env != "local":
+    # For GCP, we need a custom formatter to create a JSON payload
+    # that GCP Logging can parse correctly, including the severity.
+    def gcp_formatter(record):
+        log_entry = {
+            "severity": record["level"].name,
+            "message": record["message"],
+            "timestamp": record["time"].isoformat(),
+            "logging.googleapis.com/sourceLocation": {
+                "file": record["file"].path,
+                "line": record["line"],
+                "function": record["function"],
+            },
+        }
+        # The sink's format must only contain {message} to output the raw JSON string
+        record["extra"]["json_message"] = json.dumps(log_entry)
+        return "{extra[json_message]}\n"
 
-# 添加一个新的处理器 (sink)
-# 1. sys.stdout: 指定输出目标为标准输出。
-# 2. format=gcp_formatter: 使用我们自定义的格式化函数。
-# 3. serialize=True: 告诉 loguru 将格式化函数返回的字典序列化为 JSON 字符串。
-# 4. level="DEBUG": 设置此处理器的过滤阈值，确保 DEBUG 及以上所有级别的日志都会被处理。
-logger.add(sys.stdout, format=gcp_formatter, level="DEBUG", serialize=True)
-
-logger.info("日志系统已配置为输出与 GCP 兼容的 JSON 到 stdout")
+    logger.add(sys.stdout, format=gcp_formatter, level="DEBUG")
+    logger.info("Loguru configured for custom JSON output to stdout for GCP.")
+else:
+    # For local development, use standard colorized logging
+    logger.add(sys.stderr, level="DEBUG")
+    logger.info("Loguru configured for standard terminal output.")
 
 
 
