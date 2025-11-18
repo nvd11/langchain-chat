@@ -40,6 +40,13 @@ spec:
     name: py-api-gateway
   rules:
   - backendRefs:
+    - name: clusterip-chat-api-svc
+      port: 8000
+    matches:
+    - path:
+        type: PathPrefix
+        value: /chat-api-svc
+  - backendRefs:
     - group: ""
       kind: Service
       name: chat-ui-frontend-service
@@ -103,10 +110,3 @@ spec:
     - path:
         type: PathPrefix
         value: /webhook
-  - backendRefs:
-    - name: clusterip-chat-api-svc
-      port: 8000
-    matches:
-    - path:
-        type: PathPrefix
-        value: /chat-api-svc

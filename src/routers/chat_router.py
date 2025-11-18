@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.llm.deepseek_chat_model import get_deepseek_llm
 from src.services.llm_service import LLMService
 from src.configs.db import get_db_session
-from src.schemas.chat import ChatRequest
+from src.schemas.chat import ChatRequest, PureChatRequest
 from src.services import chat_service
 
 # Create an API router
@@ -41,5 +41,21 @@ async def chat(
     
     return StreamingResponse(
         chat_service.stream_chat_response(request, llm_service, db),
+        media_type="text/event-stream"
+    )
+
+@router.post("/purechat")
+async def pure_chat(
+    request: PureChatRequest,
+    llm_service: LLMService = Depends(get_llm_service),
+):
+    """
+    Receives a user message and directly returns the model's response as a 
+    stream of Server-Sent Events (SSE) without any database interaction.
+    """
+    logger.info(f"Received pure chat request with message: '{request.message}'")
+    
+    return StreamingResponse(
+        chat_service.stream_pure_chat_response(request, llm_service),
         media_type="text/event-stream"
     )

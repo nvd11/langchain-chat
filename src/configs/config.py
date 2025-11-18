@@ -58,12 +58,3 @@ if yaml_configs and "proxy" in yaml_configs:
         http_proxy=proxy_settings.get("http"),
         https_proxy=proxy_settings.get("https")
     )
-
-if "deepseek" in yaml_configs and "api-key" in yaml_configs["deepseek"]:
-    api_key_env_var = yaml_configs["deepseek"]["api-key"]
-    api_key = os.getenv(api_key_env_var)
-    if api_key:
-        yaml_configs["deepseek"]["api-key"] = api_key
-        logger.info(f"Environment variable for DeepSeek found, using the value from environment variable")
-    else:
-        logger.warning(f"Environment variable {api_key_env_var} not found, using value from config file")

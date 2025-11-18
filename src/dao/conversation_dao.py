@@ -10,13 +10,23 @@ async def create_conversation(db: AsyncSession, conv: ConversationCreateSchema) 
     Creates a new conversation for a user.
     """
     query = insert(conversations_table).values(
-        user_id=conv.user_id
+        user_id=conv.user_id,
+        name=conv.name
     ).returning(conversations_table)
     
     result = await db.execute(query)
     created_conv = result.first()
     await db.commit()
     return created_conv._asdict()
+
+async def get_conversation(db: AsyncSession, conversation_id: int) -> dict | None:
+    """
+    Fetches a single conversation by its ID.
+    """
+    query = select(conversations_table).where(conversations_table.c.id == conversation_id)
+    result = await db.execute(query)
+    conv = result.first()
+    return conv._asdict() if conv else None
 
 async def get_conversations_by_user(db: AsyncSession, user_id: int, skip: int = 0, limit: int = 10) -> List[dict]:
     """

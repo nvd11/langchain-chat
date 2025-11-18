@@ -56,6 +56,7 @@ async def get_conversation_with_messages_endpoint(
     response_data = {
         "id": conv_dict['id'],
         "user_id": conv_dict['user_id'],
+        "name": conv_dict.get('name'),
         "created_at": conv_dict['created_at'],
         "messages": messages
     }

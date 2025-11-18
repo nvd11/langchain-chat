@@ -28,6 +28,7 @@ conversations_table = Table(
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("user_id", Integer, nullable=False, index=True),
+    Column("name", String, nullable=True),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
 )
 

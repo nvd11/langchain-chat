@@ -3,7 +3,7 @@ from loguru import logger
 from langchain_core.messages import AIMessage, HumanMessage
 
 from src.services.llm_service import LLMService
-from src.schemas.chat import ChatRequest
+from src.schemas.chat import ChatRequest, PureChatRequest
 from src.dao import message_dao
 from src.schemas.message import MessageCreateSchema
 
@@ -66,5 +66,36 @@ async def stream_chat_response(
 
     except Exception as e:
         error_message = f"An error occurred during streaming: {e}"
+        logger.exception(error_message)
+        yield f"data: {error_message}\n\n"
+
+
+async def stream_pure_chat_response(
+    request: PureChatRequest, llm_service: LLMService
+):
+    """
+    Handles the logic of streaming the LLM response directly, without any database interaction.
+    """
+    if not llm_service:
+        error_message = "LLM Service is not available."
+        logger.error(error_message)
+        yield f"data: {error_message}\n\n"
+        return
+
+    logger.info(f"Initiating pure stream with message: '{request.message}'")
+    
+    try:
+        # Call the astream method on the service with just the user's message
+        llm_stream = llm_service.astream(request.message)
+        
+        # Iterate over the stream and yield each chunk formatted as an SSE event
+        async for chunk in llm_stream:
+            if hasattr(chunk, 'content') and chunk.content:
+                yield f"data: {chunk.content}\n\n"
+        
+        logger.info("Pure streaming finished.")
+
+    except Exception as e:
+        error_message = f"An error occurred during pure streaming: {e}"
         logger.exception(error_message)
         yield f"data: {error_message}\n\n"
