@@ -10,7 +10,7 @@ deepseek:
   base-url: "https://api.deepseek.com"
   
 database:
-  host: "34.39.2.90"
+  host: "10.195.208.3"
   port: 5432
   dbname: "default_db"
   user: "nvd11"
