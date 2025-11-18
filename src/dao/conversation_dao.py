@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert
 from typing import List
+from loguru import logger
 
 from src.models.tables import conversations_table
 from src.schemas.conversation import ConversationCreateSchema
@@ -14,9 +15,16 @@ async def create_conversation(db: AsyncSession, conv: ConversationCreateSchema) 
         name=conv.name
     ).returning(conversations_table)
     
+    logger.info("Executing insert query for new conversation...")
     result = await db.execute(query)
+    logger.info("Insert query executed.")
+    
     created_conv = result.first()
+    
+    logger.info("Committing transaction...")
     await db.commit()
+    logger.info("Transaction committed.")
+    
     return created_conv._asdict()
 
 async def get_conversation(db: AsyncSession, conversation_id: int) -> dict | None:

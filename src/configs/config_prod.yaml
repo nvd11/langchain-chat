@@ -12,7 +12,7 @@ deepseek:
   base-url: "https://api.deepseek.com"
   
 database:
-  host: "10.195.208.3" # Production Cloud SQL IP
+  host: "127.0.0.1" # Connect to the Cloud SQL Auth Proxy sidecar
   port: 5432
   dbname: "chatai_prod"
   user: "nvd11"

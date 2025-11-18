@@ -25,3 +25,8 @@ autoscaling:
 # Overriding the default appEnv and secretName for this specific service
 appEnv: "prod"
 secretName: "db-credentials"
+
+# Enable the Cloud SQL Proxy and provide the connection name
+cloudsql:
+  enabled: true
+  instanceConnectionName: "jason-hsbc:europe-west2:my-database-instance"

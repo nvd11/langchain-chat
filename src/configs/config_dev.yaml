@@ -10,7 +10,7 @@ deepseek:
   base-url: "https://api.deepseek.com"
   
 database:
-  host: "10.195.208.3"
+  host: "127.0.0.1" # Connect to the Cloud SQL Auth Proxy sidecar
   port: 5432
   dbname: "default_db"
   user: "nvd11"
