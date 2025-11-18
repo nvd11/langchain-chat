@@ -28,10 +28,25 @@ print("project_path is {}".format(project_path))
 sys.path.append(project_path)
 
 
-# setup logs path
-logger.add(os.path.join(project_path, "logs", "app.log"), level="DEBUG")
+def gcp_formatter(record):
+    return {
+        "severity": record["level"].name,
+        "message": record["message"],
+        "timestamp": record["time"].isoformat(),
+        "file": record["file"].path,
+        "line": record["line"],
+        "function": record["function"],
+    }
 
-logger.info("basic setup done")
+# 添加一个新的处理器 (sink)
+# 1. sys.stdout: 指定输出目标为标准输出。
+# 2. format=gcp_formatter: 使用我们自定义的格式化函数。
+# 3. serialize=True: 告诉 loguru 将格式化函数返回的字典序列化为 JSON 字符串。
+# 4. level="DEBUG": 设置此处理器的过滤阈值，确保 DEBUG 及以上所有级别的日志都会被处理。
+logger.add(sys.stdout, format=gcp_formatter, level="DEBUG", serialize=True)
+
+logger.info("日志系统已配置为输出与 GCP 兼容的 JSON 到 stdout")
+
 
 
 yaml_configs = None
