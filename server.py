@@ -34,7 +34,7 @@ app.include_router(conversation_router.router)
 @app.get("/")
 def read_root():
     """A simple root endpoint to confirm the server is running."""
-    logger.debug("Root endpoint was hit.")
+    # logger.debug("Root endpoint was hit.")
     return {"message": "Welcome to the Streaming API. See /docs for details."}
 
 if __name__ == "__main__":
