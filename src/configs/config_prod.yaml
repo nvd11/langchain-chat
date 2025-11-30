@@ -17,3 +17,8 @@ database:
   dbname: "chatai_prod"
   user: "nvd11"
   password_env_var: "DB_PASSWORD"
+
+gemini:
+  api-key: "GEMINI_API_KEY"
+  model-name: "gemini-2.5-pro"
+  temperature: 0.7

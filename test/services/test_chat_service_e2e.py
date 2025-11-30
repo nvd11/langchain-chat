@@ -1,7 +1,13 @@
 import pytest
+
+import src.configs.config
+from loguru import logger
+
+
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.llm.gemini_chat_model import get_gemini_llm
 from src.services import chat_service
 from src.schemas.chat import ChatRequest
 from src.llm.deepseek_chat_model import get_deepseek_llm
@@ -16,7 +22,7 @@ pytestmark = pytest.mark.asyncio
 @pytest.fixture
 async def llm_service():
     """Fixture to provide a real LLMService instance."""
-    return LLMService(llm=get_deepseek_llm())
+    return LLMService(llm=get_gemini_llm())
 
 @pytest.fixture
 async def db_session():
