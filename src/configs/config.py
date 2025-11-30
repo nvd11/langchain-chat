@@ -70,9 +70,15 @@ logger.info("all configs loaded")
 
 
 # =================proxy settings apply here =======================
-if yaml_configs and "proxy" in yaml_configs:
-    proxy_settings = yaml_configs["proxy"]
-    apply_proxy(
-        http_proxy=proxy_settings.get("http"),
-        https_proxy=proxy_settings.get("https")
-    )
+if app_env == "local" and yaml_configs and "proxy" in yaml_configs:
+    # Check LLM provider
+    llm_provider = yaml_configs.get("llm", {}).get("provider", "gemini")
+    
+    if llm_provider == "deepseek":
+        logger.info("DeepSeek provider selected. Skipping proxy configuration.")
+    else:
+        proxy_settings = yaml_configs["proxy"]
+        apply_proxy(
+            http_proxy=proxy_settings.get("http"),
+            https_proxy=proxy_settings.get("https")
+        )
