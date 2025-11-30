@@ -34,9 +34,9 @@ async def test_create_and_get_conversations(managed_db_session: AsyncSession):
     created_user = await user_dao.create_user(managed_db_session, user=user_to_create)
     user_id = created_user["id"]
 
-    # 2. Create two conversations for this user
-    conv_to_create_1 = ConversationCreateSchema(user_id=user_id)
-    await conversation_dao.create_conversation(managed_db_session, conv=conv_to_create_1)
+    # 2. Create two conversations for this user, one with a name
+    conv_to_create_1 = ConversationCreateSchema(user_id=user_id, name="Test Conversation 1")
+    created_conv_1 = await conversation_dao.create_conversation(managed_db_session, conv=conv_to_create_1)
 
     conv_to_create_2 = ConversationCreateSchema(user_id=user_id)
     await conversation_dao.create_conversation(managed_db_session, conv=conv_to_create_2)
@@ -49,6 +49,16 @@ async def test_create_and_get_conversations(managed_db_session: AsyncSession):
     assert len(conversations) == 2
     assert conversations[0]["user_id"] == user_id
     assert conversations[1]["user_id"] == user_id
+    
+    # Find the named conversation and assert its name
+    named_conv = None
+    for conv in conversations:
+        if conv["id"] == created_conv_1["id"]:
+            named_conv = conv
+            break
+    
+    assert named_conv is not None
+    assert named_conv["name"] == "Test Conversation 1"
 
 @pytest.mark.asyncio
 async def test_get_conversations_for_user_with_no_conversations(managed_db_session: AsyncSession):

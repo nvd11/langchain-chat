@@ -26,7 +26,12 @@ def build_db_url(db_config: dict) -> str | None:
         logger.error("DB host, port, or dbname missing in config.")
         return None
 
-    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{dbname}"
+    if host.startswith("/"):
+        # Unix socket connection
+        return f"postgresql+asyncpg://{user}:{password}@/{dbname}?host={host}"
+    else:
+        # TCP connection
+        return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{dbname}"
 
 # --- Database Engine and Session Setup ---
 

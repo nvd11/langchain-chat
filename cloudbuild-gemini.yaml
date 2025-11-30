@@ -56,6 +56,6 @@ serviceAccount: "projects/jason-hsbc/serviceAccounts/terraform@jason-hsbc.iam.gs
 substitutions:
   _APP_NAME: py-chat-gemini-svc
   _APP_TAG: latest
-  _APP_ENV: prod
+  _APP_ENV: preprod
   _VPC_CONNECTOR: vpc-con
   _PORT: "8000"

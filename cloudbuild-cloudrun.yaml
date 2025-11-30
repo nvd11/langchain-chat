@@ -7,6 +7,7 @@ steps:
       - "-c"
       - |
         echo "DEEPSEEK_API_KEY=$(gcloud secrets versions access latest --secret=deepseek-api-key)" > .env
+        echo "GEMINI_API_KEY=$(gcloud secrets versions access latest --secret=gemini-api-key)" >> .env
         echo "DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-pass-nvd11)" >> .env
         echo "APP_ENVIRONMENT=${_APP_ENV}" >> .env
 
@@ -37,7 +38,7 @@ steps:
       - "push"
       - "europe-west2-docker.pkg.dev/$PROJECT_ID/my-docker-repo/${_APP_NAME}"
 
-  # Deploy the service to Cloud Run
+  # Deploy the service to Cloud Run with Cloud SQL Auth Proxy
   - id: deploy image to cloud run
     name: "gcr.io/cloud-builders/gcloud"
     args:
@@ -60,7 +61,7 @@ options: # https://cloud.google.com/cloud-build/docs/build-config#options
   logging: GCS_ONLY # or CLOUD_LOGGING_ONLY https://cloud.google.com/cloud-build/docs/build-config#logging
 serviceAccount: "projects/jason-hsbc/serviceAccounts/terraform@jason-hsbc.iam.gserviceaccount.com"
 substitutions:
-  _APP_NAME: py-chat-deepseek-svc
+  _APP_NAME: py-chat-svc
   _APP_TAG: latest
   _APP_ENV: prod
   _VPC_CONNECTOR: vpc-con

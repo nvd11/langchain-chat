@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from .message import MessageSchema
 
 class ConversationBase(BaseModel):
     user_id: int
+    name: Optional[str] = None
 
 class ConversationCreateSchema(ConversationBase):
     pass

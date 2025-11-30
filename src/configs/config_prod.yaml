@@ -12,8 +12,13 @@ deepseek:
   base-url: "https://api.deepseek.com"
   
 database:
-  host: "10.195.208.3" # Production Cloud SQL IP
+  host: "10.195.208.3" # Cloud SQL private IP
   port: 5432
   dbname: "chatai_prod"
   user: "nvd11"
   password_env_var: "DB_PASSWORD"
+
+gemini:
+  api-key: "GEMINI_API_KEY"
+  model-name: "gemini-2.5-pro"
+  temperature: 0.7

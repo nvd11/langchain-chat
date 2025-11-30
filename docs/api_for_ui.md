@@ -79,7 +79,8 @@
 - **请求体 (Request Body)**:
   ```json
   {
-    "user_id": integer
+    "user_id": integer,
+    "name": "string (optional)"
   }
   ```
 - **成功响应 (200 OK)**:
@@ -87,6 +88,7 @@
   ```json
   {
     "user_id": integer,
+    "name": "string (nullable)",
     "id": integer,
     "created_at": "string (datetime)"
   }
@@ -110,6 +112,7 @@
   [
     {
       "user_id": integer,
+      "name": "string (nullable)",
       "id": integer,
       "created_at": "string (datetime)"
     },
@@ -130,6 +133,7 @@
   ```json
   {
     "user_id": integer,
+    "name": "string (nullable)",
     "id": integer,
     "created_at": "string (datetime)",
     "messages": [
