@@ -1,4 +1,6 @@
 import asyncio
+import json
+import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 from langchain_core.messages import AIMessage, HumanMessage
@@ -48,7 +50,17 @@ async def stream_chat_response(
     if not llm_service:
         error_message = "LLM Service is not available."
         logger.error(error_message)
-        yield f"data: {error_message}\n\n"
+        # Fallback to simple text if service not available, or construct a JSON error
+        # Since we want to standardize, let's use JSON even here
+        error_data = {
+            "id": f"chatcmpl-error",
+            "object": "chat.completion.chunk",
+            "created": int(time.time()),
+            "model": request.model,
+            "choices": [{"index": 0, "delta": {"content": error_message}, "finish_reason": "stop"}]
+        }
+        yield f"data: {json.dumps(error_data)}\n\n"
+        yield "data: [DONE]\n\n"
         return
 
     # 1. Save user message
@@ -91,7 +103,24 @@ async def stream_chat_response(
                 logger.debug(f"Received chunk of type {type(chunk)}: {chunk}")
                 if hasattr(chunk, 'content') and chunk.content:
                     full_response_content += chunk.content
-                    yield f"data: {chunk.content}\n\n"
+                    
+                    # Construct OpenAI-compatible SSE chunk
+                    chunk_data = {
+                        "id": f"chatcmpl-{request.conversation_id}",
+                        "object": "chat.completion.chunk",
+                        "created": int(time.time()),
+                        "model": request.model,
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {
+                                    "content": chunk.content
+                                },
+                                "finish_reason": None
+                            }
+                        ]
+                    }
+                    yield f"data: {json.dumps(chunk_data)}\n\n"
             except StopAsyncIteration:
                 # Stream ended normally
                 break
@@ -103,10 +132,29 @@ async def stream_chat_response(
                     asyncio.create_task(save_partial_response_task(request.conversation_id, full_response_content))
                     response_saved = True
                     logger.info(f"Triggered background save for partial response due to timeout: conv={request.conversation_id} len={len(full_response_content)}")
-                yield f"data: [Stream timeout after 5 minutes]\n\n"
+                
+                # Send timeout message as content
+                timeout_data = {
+                    "id": f"chatcmpl-{request.conversation_id}",
+                    "object": "chat.completion.chunk",
+                    "created": int(time.time()),
+                    "model": request.model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {
+                                "content": "\n\n[Stream timeout after 5 minutes]"
+                            },
+                            "finish_reason": "stop"
+                        }
+                    ]
+                }
+                yield f"data: {json.dumps(timeout_data)}\n\n"
+                yield "data: [DONE]\n\n"
                 return
         
         logger.info("Streaming finished.")
+        yield "data: [DONE]\n\n"
         
         # 5. Save assistant's full response
         if full_response_content:
@@ -134,7 +182,25 @@ async def stream_chat_response(
         if full_response_content and not response_saved:
             # Also use background task for consistency, though current session might be valid depending on error
             asyncio.create_task(save_partial_response_task(request.conversation_id, full_response_content))
-        yield f"data: {error_message}\n\n"
+        
+        # Send error as content
+        error_data = {
+            "id": f"chatcmpl-{request.conversation_id}",
+            "object": "chat.completion.chunk",
+            "created": int(time.time()),
+            "model": request.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {
+                        "content": f"\n\n{error_message}"
+                    },
+                    "finish_reason": "stop"
+                }
+            ]
+        }
+        yield f"data: {json.dumps(error_data)}\n\n"
+        yield "data: [DONE]\n\n"
 
 
 async def stream_pure_chat_response(
@@ -146,7 +212,15 @@ async def stream_pure_chat_response(
     if not llm_service:
         error_message = "LLM Service is not available."
         logger.error(error_message)
-        yield f"data: {error_message}\n\n"
+        error_data = {
+            "id": "chatcmpl-pure-error",
+            "object": "chat.completion.chunk",
+            "created": int(time.time()),
+            "model": request.model,
+            "choices": [{"index": 0, "delta": {"content": error_message}, "finish_reason": "stop"}]
+        }
+        yield f"data: {json.dumps(error_data)}\n\n"
+        yield "data: [DONE]\n\n"
         return
 
     logger.info(f"Initiating pure stream with message: '{request.message}'")
@@ -158,11 +232,44 @@ async def stream_pure_chat_response(
         # Iterate over the stream and yield each chunk formatted as an SSE event
         async for chunk in llm_stream:
             if hasattr(chunk, 'content') and chunk.content:
-                yield f"data: {chunk.content}\n\n"
+                chunk_data = {
+                    "id": "chatcmpl-pure",
+                    "object": "chat.completion.chunk",
+                    "created": int(time.time()),
+                    "model": request.model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {
+                                "content": chunk.content
+                            },
+                            "finish_reason": None
+                        }
+                    ]
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
         
         logger.info("Pure streaming finished.")
+        yield "data: [DONE]\n\n"
 
     except Exception as e:
         error_message = f"An error occurred during pure streaming: {e}"
         logger.exception(error_message)
-        yield f"data: {error_message}\n\n"
+        
+        error_data = {
+            "id": "chatcmpl-pure",
+            "object": "chat.completion.chunk",
+            "created": int(time.time()),
+            "model": request.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {
+                        "content": f"\n\n{error_message}"
+                    },
+                    "finish_reason": "stop"
+                }
+            ]
+        }
+        yield f"data: {json.dumps(error_data)}\n\n"
+        yield "data: [DONE]\n\n"

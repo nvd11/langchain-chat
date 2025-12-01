@@ -24,7 +24,7 @@ autoscaling:
 
 # Overriding the default appEnv and secretName for this specific service
 appEnv: "prod"
-secretName: "db-credentials"
+secretName: "chat-api-secrets"
 
 # Enable the Cloud SQL Proxy and provide the connection name
 cloudsql:

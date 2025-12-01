@@ -1,4 +1,5 @@
 import pytest
+import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.services import chat_service
@@ -51,9 +52,19 @@ async def test_stream_chat_response_gemini_e2e(db_session: AsyncSession, new_con
     try:
         async for chunk in stream_generator:
             if chunk.startswith("data: "):
-                content = chunk[len("data: "):-2]
-                print(content, end="", flush=True)
-                full_response += content
+                data_str = chunk[len("data: "):-2]
+                if data_str == "[DONE]":
+                    break
+                
+                try:
+                    data = json.loads(data_str)
+                    content = data["choices"][0]["delta"].get("content", "")
+                    print(content, end="", flush=True)
+                    full_response += content
+                except json.JSONDecodeError:
+                    print(f"\n[Warning] Non-JSON chunk received: {data_str}")
+                    # For compatibility or debugging, maybe append raw? 
+                    # But we expect JSON now.
     except Exception as e:
         pytest.fail(f"Streaming failed for model '{model_name}' with an exception: {e}")
     finally:
@@ -83,9 +94,17 @@ async def test_stream_chat_response_deepseek_e2e(db_session: AsyncSession, new_c
     try:
         async for chunk in stream_generator:
             if chunk.startswith("data: "):
-                content = chunk[len("data: "):-2]
-                print(content, end="", flush=True)
-                full_response += content
+                data_str = chunk[len("data: "):-2]
+                if data_str == "[DONE]":
+                    break
+                
+                try:
+                    data = json.loads(data_str)
+                    content = data["choices"][0]["delta"].get("content", "")
+                    print(content, end="", flush=True)
+                    full_response += content
+                except json.JSONDecodeError:
+                    print(f"\n[Warning] Non-JSON chunk received: {data_str}")
     except Exception as e:
         pytest.fail(f"Streaming failed for model '{model_name}' with an exception: {e}")
     finally:

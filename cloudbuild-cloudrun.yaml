@@ -55,6 +55,7 @@ steps:
       - "--set-env-vars=APP_ENVIRONMENT=${_APP_ENV}"
       - "--vpc-connector=${_VPC_CONNECTOR}"
       - "--vpc-egress=all"
+      - "--timeout=3600"
 
 logsBucket: gs://jason-hsbc_cloudbuild/logs/
 options: # https://cloud.google.com/cloud-build/docs/build-config#options             
@@ -63,6 +64,6 @@ serviceAccount: "projects/jason-hsbc/serviceAccounts/terraform@jason-hsbc.iam.gs
 substitutions:
   _APP_NAME: py-chat-svc
   _APP_TAG: latest
-  _APP_ENV: prod
+  _APP_ENV: preprod
   _VPC_CONNECTOR: vpc-con
   _PORT: "8000"
