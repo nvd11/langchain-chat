@@ -1,30 +1,3 @@
-# GKE Gateway Configuration
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: py-api-gateway
-  namespace: default
-spec:
-  gatewayClassName: gke-l7-global-external-managed
-  listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
-    allowedRoutes:
-      namespaces:
-        from: Same
-  - name: https
-    protocol: HTTPS
-    port: 443
-    allowedRoutes:
-      namespaces:
-        from: Same
-    tls:
-      mode: Terminate
-      options:
-        networking.gke.io/pre-shared-certs: gke-gateway-ssl-cert
----
-# GKE HTTPRoute Configuration
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -40,16 +13,26 @@ spec:
     name: py-api-gateway
   rules:
   - backendRefs:
-    - name: clusterip-chat-api-svc
+    - group: ""
+      kind: Service
+      name: clusterip-python-template-app
       port: 8000
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /python-template-app
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: clusterip-chat-api-svc
+      port: 8000
+      weight: 1
     matches:
     - path:
         type: PathPrefix
         value: /chat-api-svc
-    timeouts:
-      request: 300s
   - backendRefs:
-
     - group: ""
       kind: Service
       name: chat-ui-frontend-service
@@ -113,3 +96,13 @@ spec:
     - path:
         type: PathPrefix
         value: /webhook
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: clusterip-py-github-agent
+      port: 8000
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /py-github-agent
