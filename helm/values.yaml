@@ -114,3 +114,8 @@ cloudsql:
     requests:
       memory: "256Mi"
       cpu: "100m"
+
+# GCP Backend Policy for GKE Gateway
+backendPolicy:
+  enabled: true
+  timeoutSec: 300
