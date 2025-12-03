@@ -20,13 +20,20 @@ async def create_message(db: AsyncSession, message: MessageCreateSchema) -> dict
     await db.commit()
     return created_message._asdict()
 
-async def get_messages_by_conversation(db: AsyncSession, conversation_id: int) -> List[dict]:
+async def get_messages_by_conversation(db: AsyncSession, conversation_id: int, limit: int = None) -> List[dict]:
     """
-    Fetches all messages for a specific conversation.
+    Fetches messages for a specific conversation.
+    If a limit is provided, fetches the most recent messages up to that limit, ordered descending.
+    Otherwise, fetches all messages in chronological order (ascending).
     """
     query = select(messages_table).where(
         messages_table.c.conversation_id == conversation_id
-    ).order_by(messages_table.c.created_at)
+    )
+    
+    if limit:
+        query = query.order_by(messages_table.c.created_at.desc()).limit(limit)
+    else:
+        query = query.order_by(messages_table.c.created_at)
     
     result = await db.execute(query)
     messages = result.fetchall()

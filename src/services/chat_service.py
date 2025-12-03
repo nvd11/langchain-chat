@@ -69,11 +69,15 @@ async def stream_chat_response(
     )
     await message_dao.create_message(db, message=user_message_to_save)
 
-    # 2. Load conversation history
+    # 2. Define history limit and load conversation history from DB
+    MAX_HISTORY_LENGTH = 20
     history_from_db = await message_dao.get_messages_by_conversation(
-        db, conversation_id=request.conversation_id
+        db, conversation_id=request.conversation_id, limit=MAX_HISTORY_LENGTH
     )
     
+    # Reverse the list to restore chronological order (oldest first)
+    history_from_db.reverse()
+
     # Format history for the LLM
     chat_history = []
     for msg in history_from_db:
