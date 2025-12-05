@@ -100,3 +100,22 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Cloud SQL Proxy sidecar configuration
+cloudsql:
+  enabled: false
+  instanceConnectionName: ""
+  privateIp: true
+  port: 5432
+  image:
+    repository: gcr.io/cloud-sql-connectors/cloud-sql-proxy
+    tag: "2.8.0"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+
+# GCP Backend Policy for GKE Gateway
+backendPolicy:
+  enabled: true
+  timeoutSec: 300

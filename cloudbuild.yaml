@@ -6,7 +6,8 @@ steps:
     args:
       - "-c"
       - |
-        echo "GEMINI_API_KEY=$(gcloud secrets versions access latest --secret=gemini-api-key)" > .env
+        echo "DEEPSEEK_API_KEY=$(gcloud secrets versions access latest --secret=deepseek-api-key)" > .env
+        echo "GEMINI_API_KEY=$(gcloud secrets versions access latest --secret=gemini-api-key)" >> .env
         echo "APP_ENVIRONMENT=${_APP_ENV}" >> .env
 
 

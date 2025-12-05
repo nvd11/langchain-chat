@@ -37,6 +37,7 @@
 |-------------|--------------------------|--------------------|------------------------------------|
 | `id`        | `Integer`                | **主键**, `autoincrement` | 对话的唯一标识符。                 |
 | `user_id`   | `Integer`                | `nullable=False`, `index=True` | 关联的用户ID (软关联)。            |
+| `name`      | `String`                 | `nullable=True`    | 用户为对话指定的名称，用于UI显示。 |
 | `created_at`| `DateTime(timezone=True)`| `server_default=func.now()` | 对话的创建时间（带时区）。         |
 
 ---

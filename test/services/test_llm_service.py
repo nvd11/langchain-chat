@@ -1,66 +1,40 @@
 import pytest
-import os
-from unittest.mock import patch, AsyncMock, MagicMock
-
 from langchain_core.messages import AIMessage
-from src.llm.gemini_web_async import GeminiWebAsyncChatModel
+
 from src.services.llm_service import LLMService
+from src.llm.gemini_chat_model import get_gemini_llm
+
+# Mark all tests in this file as asyncio
+pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
-def set_api_key():
-    """Fixture to set the GEMINI_API_KEY environment variable for tests."""
-    original_key = os.environ.get("GEMINI_API_KEY")
-    test_key = "test-api-key"
-    os.environ["GEMINI_API_KEY"] = test_key
-    yield
-    if original_key is None:
-        if "GEMINI_API_KEY" in os.environ:
-            del os.environ["GEMINI_API_KEY"]
-    else:
-        os.environ["GEMINI_API_KEY"] = original_key
-
-@patch('aiohttp.ClientSession.post')
-async def test_llm_service_with_gemini_model_success(mock_post, set_api_key):
+async def gemini_llm_service() -> LLMService:
     """
-    Test that LLMService can successfully use GeminiWebAsyncChatModel
-    and return a valid response when the underlying API call is mocked.
+    Fixture to provide a real LLMService instance initialized with the
+    GeminiChatModel.
     """
-    # 1. Mock the response from the external API
-    mock_response_data = {
-        "candidates": [
-            {
-                "content": {
-                    "parts": [{"text": "This is a mocked Gemini response."}],
-                    "role": "model"
-                }
-            }
-        ]
-    }
-    
-    mock_response = AsyncMock()
-    mock_response.json = AsyncMock(return_value=mock_response_data)
-    # Configure raise_for_status as a synchronous mock, not an async one
-    mock_response.raise_for_status = MagicMock()
-    
-    async_context_manager = AsyncMock()
-    async_context_manager.__aenter__.return_value = mock_response
-    mock_post.return_value = async_context_manager
+    gemini_model = get_gemini_llm()
+    return LLMService(llm=gemini_model)
 
-    # 2. Initialize the model and the service
-    gemini_model = GeminiWebAsyncChatModel()
-    llm_service = LLMService(llm=gemini_model)
+async def test_gemini_ainvoke_e2e(gemini_llm_service: LLMService):
+    """
+    End-to-end test for the LLMService.ainvoke() method using the real Gemini model.
+    This test makes a real call to the Google Gemini API.
+    """
+    # 1. Prepare the prompt
+    prompt = "Hello, Gemini! In one sentence, tell me what you are."
 
-    # 3. Call the service
-    prompt = "Tell me a joke."
-    response = await llm_service.ainvoke(prompt)
-    print(response)
+    # 2. Call the ainvoke method
+    try:
+        response = await gemini_llm_service.ainvoke(prompt)
+    except Exception as e:
+        pytest.fail(f"LLMService.ainvoke() failed with an exception: {e}")
+
+    # 3. Print the response for verification
+    print(f"\n--- Gemini Response ---\n{response.content}\n-----------------------")
 
     # 4. Assertions
-    assert isinstance(response, AIMessage)
-    assert response.content == "This is a mocked Gemini response."
-    
-    # Verify that the post method was called correctly
-    mock_post.assert_called_once()
-    call_args = mock_post.call_args
-    # The prompt string is converted to a HumanMessage internally by langchain
-    assert call_args.kwargs['json']['contents'][0]['parts'][0]['text'] == prompt
+    assert response is not None, "Response should not be None."
+    assert isinstance(response, AIMessage), "Response should be an instance of AIMessage."
+    assert response.content, "Response content should not be empty."
+    assert len(response.content) > 5, "Response content should have a reasonable length."
